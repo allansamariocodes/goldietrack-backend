@@ -2,11 +2,11 @@ name: Update Gold & Silver Prices
 
 on:
   schedule:
-    # 5:00 PM IST (11:30 UTC)
+    # Run at 11:30 UTC (5:00 PM IST)
     - cron: '30 11 * * *'
-    # 11:30 PM IST (18:00 UTC)
+    # Run at 18:00 UTC (11:30 PM IST)
     - cron: '0 18 * * *'
-  # Allow manual trigger
+  # Allow manual trigger via GitHub UI
   workflow_dispatch:
 
 jobs:
@@ -14,27 +14,31 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Update Prices
+      - name: Trigger Price Update
         run: |
           echo "🔄 Triggering price update..."
           
-          RESPONSE=$(curl -s -X GET \
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json" \
             ${{ secrets.VERCEL_URL }}/api/cron/update-prices)
           
-          echo "Response: $RESPONSE"
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
           
-          # Check if successful
-          if echo "$RESPONSE" | grep -q '"success":true'; then
+          echo "Response: $BODY"
+          echo "HTTP Status: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" -eq 200 ]; then
             echo "✅ Prices updated successfully!"
+            exit 0
           else
-            echo "❌ Price update failed!"
+            echo "❌ Price update failed with status $HTTP_CODE"
             exit 1
           fi
       
-      - name: Notify on Failure
+      - name: Send Notification on Failure
         if: failure()
         run: |
-          echo "⚠️ Price update failed! Check logs."
-          # You can add Slack/Discord notification here
+          echo "⚠️ Price update workflow failed!"
+          echo "Check the logs above for details."
