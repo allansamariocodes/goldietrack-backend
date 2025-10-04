@@ -1,0 +1,12 @@
+{
+  "name": "goldietrack-backend",
+  "version": "1.0.0",
+  "description": "Backend API for GoldieTrack with scheduled price updates",
+  "main": "api/prices.js",
+  "scripts": {
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": ["gold", "silver", "prices", "api"],
+  "author": "Your Name",
+  "license": "MIT"
+}
