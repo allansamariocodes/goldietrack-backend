@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
     // Get cached prices from Redis
     const cachedPrices = await getCachedPrices();
     
-    if (cachedPrices) {
+    if (cachedPrices && cachedPrices.prices) {
       return res.status(200).json({
         success: true,
         prices: cachedPrices.prices,
@@ -59,21 +59,42 @@ async function getCachedPrices() {
       }
     });
 
+    if (!response.ok) {
+      console.error('Redis response not OK:', response.status);
+      return null;
+    }
+
     const data = await response.json();
     
-    if (data.result) {
-      return JSON.parse(data.result);
+    console.log('Redis response:', JSON.stringify(data, null, 2));
+    
+    // Upstash returns { result: "stringified_json" } or { result: null }
+    if (data.result && data.result !== null) {
+      try {
+        const parsed = JSON.parse(data.result);
+        console.log('Parsed data:', JSON.stringify(parsed, null, 2));
+        
+        // Check if the parsed data has a 'value' property (double-stringified)
+        if (parsed.value && typeof parsed.value === 'string') {
+          const finalData = JSON.parse(parsed.value);
+          console.log('Final data:', JSON.stringify(finalData, null, 2));
+          return finalData;
+        }
+        
+        return parsed;
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        return null;
+      }
     }
     
+    console.log('No result in Redis response');
     return null;
   } catch (error) {
     console.error('Redis fetch error:', error);
     return null;
   }
 }
-
-
-
 
 // Helper: Calculate next update time
 function getNextUpdateTime() {
