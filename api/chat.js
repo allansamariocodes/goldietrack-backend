@@ -1,4 +1,3 @@
-// api/chat.js (Node.js runtime)
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('Method Not Allowed');
 
@@ -9,16 +8,16 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.FASTMCP_TOKEN}` // Set this in Vercel Dashboard
+        "Authorization": `Bearer ${process.env.FASTMCP_TOKEN}`
       },
       body: JSON.stringify({
         method: "mcp.call_tool",
         params: {
           name: "generate_ai_analysis",
           arguments: {
-            // We pass the local portfolio data directly into the tool
-            custom_context: JSON.stringify(portfolio),
-            user_question: question
+            // Send the real portfolio data from the phone
+            portfolio_data: JSON.stringify(portfolio),
+            question: question
           }
         }
       })
@@ -26,12 +25,12 @@ export default async function handler(req, res) {
 
     const data = await response.json();
     
-    // Extract the text from the MCP content block
+    // Grab the text from the first content block
     const aiResponse = data.result.content[0].text;
 
     return res.status(200).json({ answer: aiResponse });
   } catch (error) {
-    console.error("Bridge Error:", error);
-    return res.status(500).json({ error: "Failed to reach AI Brain" });
+    console.error("Vercel Bridge Error:", error);
+    return res.status(500).json({ error: "Could not connect to AI server" });
   }
 }
