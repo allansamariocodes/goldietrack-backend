@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
 
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const { prompt } = req.body;
 
@@ -31,7 +31,6 @@ module.exports = async (req, res) => {
       success: true,
       output: response.text(),
     });
-
   } catch (error) {
     console.error("Gemini error:", error);
     return res.status(500).json({
