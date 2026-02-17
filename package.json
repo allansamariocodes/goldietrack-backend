@@ -6,7 +6,15 @@
   "scripts": {
     "test": "echo \"No tests yet\""
   },
-  "keywords": ["gold", "silver", "prices", "api"],
+  "keywords": [
+    "gold",
+    "silver",
+    "prices",
+    "api"
+  ],
   "author": "Your Name",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1"
+  }
 }

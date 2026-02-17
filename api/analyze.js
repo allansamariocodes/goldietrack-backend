@@ -1,24 +1,42 @@
-import { MultiServerMCPClient } from "langchain_mcp_adapters/client";
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const SERVERS = {
-  "Precious Metals Portfolio AI": {
-    transport: "streamable_http",
-    url: "https://consistent-black-cicada.fastmcp.app/mcp",
-  },
-};
+module.exports = async (req, res) => {
+  // CORS (same style as prices.js)
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-export default async function handler(req, res) {
-  try {
-    const client = new MultiServerMCPClient(SERVERS);
-    const tools = await client.get_tools();
-
-    const tool = tools.find(t => t.name === "analyze_precious_metals");
-
-    const result = await tool.ainvoke({});
-
-    res.status(200).json({ result });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "MCP call failed" });
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
   }
-}
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  try {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+
+    const { prompt } = req.body;
+
+    if (!prompt) {
+      return res.status(400).json({ error: "Prompt is required" });
+    }
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+
+    return res.status(200).json({
+      success: true,
+      output: response.text(),
+    });
+
+  } catch (error) {
+    console.error("Gemini error:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
